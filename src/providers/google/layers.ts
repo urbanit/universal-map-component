@@ -142,16 +142,34 @@ export class GoogleMapsLayerManager {
 
     const markers: google.maps.marker.AdvancedMarkerElement[] = [];
 
+    // Check if map has a Map ID (required for AdvancedMarkerElement)
+    const mapId = (this.map as any).mapId;
+
+    if (!mapId) {
+      console.warn(
+        'AdvancedMarkerElement requires a Map ID. ' +
+        'Add mapId to your map configuration to use Advanced Markers. ' +
+        'See: https://developers.google.com/maps/documentation/javascript/advanced-markers/start'
+      );
+    }
+
     if (geoJSON.type === 'FeatureCollection') {
       geoJSON.features.forEach((feature: any) => {
         if (feature.geometry.type === 'Point') {
           const [lng, lat] = feature.geometry.coordinates;
-          const marker = new google.maps.marker.AdvancedMarkerElement({
-            position: { lat, lng },
-            map: this.map,
-            title: feature.properties?.name || feature.properties?.title,
-          });
-          markers.push(marker);
+
+          try {
+            // Try to use AdvancedMarkerElement (requires Map ID)
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+              position: { lat, lng },
+              map: this.map,
+              title: feature.properties?.name || feature.properties?.title,
+            });
+            markers.push(marker);
+          } catch (error) {
+            // This will only happen if Advanced Markers fail completely
+            console.error('Failed to create marker:', error);
+          }
         }
       });
     }

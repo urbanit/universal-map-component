@@ -75,11 +75,25 @@ class GoogleMapsAPILoader {
         return;
       }
 
-      // Build the script URL
+      // Create a unique callback name
+      const callbackName = `gmapsCallback_${Date.now()}`;
+
+      // Set up global callback for async loading
+      (window as any)[callbackName] = () => {
+        delete (window as any)[callbackName];
+        if (window.google?.maps) {
+          resolve(window.google);
+        } else {
+          reject(new Error('Google Maps API loaded but google.maps not available'));
+        }
+      };
+
+      // Build the script URL with callback for proper async loading
       const params = new URLSearchParams({
         key: options.apiKey,
         v: options.version || 'weekly',
         loading: 'async',
+        callback: callbackName,
         ...(options.libraries && options.libraries.length > 0 && {
           libraries: options.libraries.join(','),
         }),
@@ -95,17 +109,9 @@ class GoogleMapsAPILoader {
       script.async = true;
       script.defer = true;
 
-      // Handle load
-      script.addEventListener('load', () => {
-        if (window.google?.maps) {
-          resolve(window.google);
-        } else {
-          reject(new Error('Google Maps API loaded but google.maps not available'));
-        }
-      });
-
       // Handle error
       script.addEventListener('error', () => {
+        delete (window as any)[callbackName];
         reject(new Error('Failed to load Google Maps API script'));
       });
 

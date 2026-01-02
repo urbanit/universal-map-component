@@ -199,18 +199,27 @@
         // Import from source files (for testing before build)
         import { UniversalMap } from '../src/index.ts';
 
-        // Get API key from environment variable
+        // Get API key and Map ID from environment variables
         const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 
         // Debug logging
         console.log('Environment variables:', import.meta.env);
         console.log('API_KEY value:', API_KEY);
-        console.log('API_KEY type:', typeof API_KEY);
-        console.log('API_KEY length:', API_KEY?.length);
+        console.log('MAP_ID value:', MAP_ID || '(not set)');
 
         if (!API_KEY) {
             console.error('Google Maps API key not found. Make sure VITE_GOOGLE_MAPS_API_KEY is set in .env file');
             alert('API key not found! Check console for details.');
+        }
+
+        if (!MAP_ID) {
+            console.warn(
+                'Map ID not set. Advanced Markers will show a warning. ' +
+                'To enable Advanced Markers, create a Map ID at: ' +
+                'https://console.cloud.google.com/google/maps-apis/studio/maps ' +
+                'and add it to .env as VITE_GOOGLE_MAPS_MAP_ID'
+            );
         }
 
         let map;
@@ -248,7 +257,10 @@
                     container: 'map-container',
                     center: [40.7128, -74.0060], // NYC
                     zoom: 12,
-                    enable3D: true
+                    enable3D: true,
+                    providerOptions: {
+                        mapId: MAP_ID // Pass Map ID for Advanced Markers support
+                    }
                 });
 
                 await map.initialize();
