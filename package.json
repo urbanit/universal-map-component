@@ -43,17 +43,18 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/universal-map-component.git"
+    "url": "https://github.com/urbanit/universal-map-component.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/universal-map-component/issues"
+    "url": "https://github.com/urbanit/universal-map-component/issues"
   },
-  "homepage": "https://github.com/yourusername/universal-map-component#readme",
+  "homepage": "https://github.com/urbanit/universal-map-component#readme",
   "peerDependencies": {
     "deck.gl": "^8.9.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.13",
+    "@types/google.maps": "^3.55.0",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",

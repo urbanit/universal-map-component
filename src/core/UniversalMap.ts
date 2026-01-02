@@ -267,12 +267,18 @@ export class UniversalMap {
    * Create the appropriate provider instance
    */
   private async createProvider(providerName: string): Promise<IMapProvider> {
-    // Dynamic import of providers
-    // For now, we'll throw an error - providers will be implemented next
-    throw new MapError(
-      `Provider "${providerName}" not yet implemented. Available providers will be added in the next phase.`,
-      'PROVIDER_NOT_FOUND'
-    );
+    switch (providerName.toLowerCase()) {
+      case 'google': {
+        const { GoogleMapsProvider } = await import('../providers/google');
+        return new GoogleMapsProvider();
+      }
+      // Additional providers will be added here
+      default:
+        throw new MapError(
+          `Provider "${providerName}" not found. Available providers: google`,
+          'PROVIDER_NOT_FOUND'
+        );
+    }
   }
 
   /**
