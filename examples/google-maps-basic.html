@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Map Component - Google Maps Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #a0a0a0;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f5f5f5;
+            padding: 1.5rem;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+
+        .controls {
+            margin-bottom: 1.5rem;
+        }
+
+        .controls h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 0.75rem;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        button {
+            background: #1a1a2e;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background: #2a2a3e;
+        }
+
+        button:active {
+            background: #0a0a1e;
+        }
+
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 0.875rem;
+            z-index: 1000;
+        }
+
+        .status.loading {
+            color: #ff9800;
+        }
+
+        .status.ready {
+            color: #4caf50;
+        }
+
+        .status.error {
+            color: #f44336;
+        }
+
+        .event-log {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .event-log-item {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .event-log-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Universal Map Component</h1>
+        <div class="subtitle">Google Maps Provider - Basic Example</div>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="controls">
+                <h3>Map Controls</h3>
+
+                <div class="control-group">
+                    <label>Latitude</label>
+                    <input type="number" id="lat-input" value="40.7128" step="0.0001">
+                </div>
+
+                <div class="control-group">
+                    <label>Longitude</label>
+                    <input type="number" id="lng-input" value="-74.0060" step="0.0001">
+                </div>
+
+                <div class="control-group">
+                    <label>Zoom</label>
+                    <input type="number" id="zoom-input" value="12" min="0" max="22" step="1">
+                </div>
+
+                <button id="go-button">Go to Location</button>
+            </div>
+
+            <div class="controls">
+                <h3>Quick Locations</h3>
+                <button onclick="goToLocation(40.7128, -74.0060, 12)">New York</button>
+                <button onclick="goToLocation(51.5074, -0.1278, 12)">London</button>
+                <button onclick="goToLocation(35.6762, 139.6503, 12)">Tokyo</button>
+                <button onclick="goToLocation(-33.8688, 151.2093, 12)">Sydney</button>
+            </div>
+
+            <div class="controls">
+                <h3>Event Log</h3>
+                <div class="event-log" id="event-log"></div>
+            </div>
+        </div>
+
+        <div id="map-container">
+            <div class="status loading" id="status">Initializing...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import from source files (for testing before build)
+        import { UniversalMap } from '../src/index.ts';
+
+        const API_KEY = 'AIzaSyDT5MxUAxipivW-WVKnDWa3_-3JOgFmf6g';
+
+        let map;
+        const eventLog = document.getElementById('event-log');
+        const statusEl = document.getElementById('status');
+
+        function updateStatus(message, type = 'loading') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function logEvent(eventType, data = {}) {
+            const logItem = document.createElement('div');
+            logItem.className = 'event-log-item';
+            const timestamp = new Date().toLocaleTimeString();
+            logItem.textContent = `[${timestamp}] ${eventType}`;
+            if (data.lngLat) {
+                logItem.textContent += ` - ${data.lngLat[0].toFixed(4)}, ${data.lngLat[1].toFixed(4)}`;
+            }
+            eventLog.insertBefore(logItem, eventLog.firstChild);
+
+            // Keep only last 20 events
+            while (eventLog.children.length > 20) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        async function initializeMap() {
+            try {
+                updateStatus('Loading Google Maps API...', 'loading');
+
+                map = new UniversalMap({
+                    provider: 'google',
+                    apiKey: API_KEY,
+                    container: 'map-container',
+                    center: [40.7128, -74.0060], // NYC
+                    zoom: 12,
+                    enable3D: true
+                });
+
+                await map.initialize();
+
+                updateStatus('Map Ready!', 'ready');
+                logEvent('Map initialized');
+
+                // Set up event listeners
+                map.on('click', (e) => {
+                    logEvent('click', e);
+                });
+
+                map.on('zoom', (e) => {
+                    logEvent('zoom', { zoom: map.getViewState().zoom });
+                });
+
+                map.on('move', (e) => {
+                    logEvent('move', e);
+                });
+
+                // Add a sample GeoJSON layer
+                map.addLayer({
+                    id: 'sample-marker',
+                    type: 'markers',
+                    source: {
+                        type: 'geojson',
+                        data: {
+                            type: 'FeatureCollection',
+                            features: [{
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: [-74.0060, 40.7128]
+                                },
+                                properties: {
+                                    name: 'New York City'
+                                }
+                            }]
+                        }
+                    }
+                });
+
+                logEvent('Layer added', { id: 'sample-marker' });
+
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                updateStatus('Error: ' + error.message, 'error');
+                logEvent('error', { message: error.message });
+            }
+        }
+
+        // Go to location function
+        window.goToLocation = function(lat, lng, zoom) {
+            if (map) {
+                map.setViewState({
+                    center: [lat, lng],
+                    zoom: zoom
+                }, { duration: 1000 });
+                logEvent('navigate', { lngLat: [lat, lng], zoom });
+            }
+        };
+
+        // Handle "Go" button
+        document.getElementById('go-button').addEventListener('click', () => {
+            const lat = parseFloat(document.getElementById('lat-input').value);
+            const lng = parseFloat(document.getElementById('lng-input').value);
+            const zoom = parseInt(document.getElementById('zoom-input').value);
+            goToLocation(lat, lng, zoom);
+        });
+
+        // Initialize on load
+        initializeMap();
+    </script>
+</body>
+</html>
