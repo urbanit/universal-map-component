@@ -79,6 +79,7 @@ class GoogleMapsAPILoader {
       const params = new URLSearchParams({
         key: options.apiKey,
         v: options.version || 'weekly',
+        loading: 'async',
         ...(options.libraries && options.libraries.length > 0 && {
           libraries: options.libraries.join(','),
         }),

@@ -45,7 +45,7 @@ export class GoogleMapsProvider extends BaseMapProvider {
     // Load Google Maps API
     await loadGoogleMapsAPI({
       apiKey: config.apiKey!,
-      libraries: ['places', 'geometry', 'drawing'],
+      libraries: ['places', 'geometry', 'drawing', 'marker'],
     });
 
     // Resolve container

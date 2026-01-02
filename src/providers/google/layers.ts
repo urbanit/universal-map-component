@@ -13,7 +13,7 @@ export class GoogleMapsLayerManager {
   private map: google.maps.Map;
   private layers: Map<string, any> = new Map();
   private dataLayers: Map<string, google.maps.Data> = new Map();
-  private markers: Map<string, google.maps.Marker[]> = new Map();
+  private markers: Map<string, google.maps.marker.AdvancedMarkerElement[]> = new Map();
 
   constructor(map: google.maps.Map) {
     this.map = map;
@@ -88,7 +88,7 @@ export class GoogleMapsLayerManager {
 
     const markers = this.markers.get(layerId);
     if (markers) {
-      markers.forEach(marker => marker.setMap(visible ? this.map : null));
+      markers.forEach(marker => marker.map = visible ? this.map : null);
     }
   }
 
@@ -98,7 +98,7 @@ export class GoogleMapsLayerManager {
   destroy(): void {
     this.dataLayers.forEach(layer => layer.setMap(null));
     this.markers.forEach(markerArray =>
-      markerArray.forEach(marker => marker.setMap(null))
+      markerArray.forEach(marker => marker.map = null)
     );
     this.dataLayers.clear();
     this.markers.clear();
@@ -140,13 +140,13 @@ export class GoogleMapsLayerManager {
     const dataSource = DataSourceFactory.createDataSource(source);
     const geoJSON = await dataSource.load() as any;
 
-    const markers: google.maps.Marker[] = [];
+    const markers: google.maps.marker.AdvancedMarkerElement[] = [];
 
     if (geoJSON.type === 'FeatureCollection') {
       geoJSON.features.forEach((feature: any) => {
         if (feature.geometry.type === 'Point') {
           const [lng, lat] = feature.geometry.coordinates;
-          const marker = new google.maps.Marker({
+          const marker = new google.maps.marker.AdvancedMarkerElement({
             position: { lat, lng },
             map: this.map,
             title: feature.properties?.name || feature.properties?.title,

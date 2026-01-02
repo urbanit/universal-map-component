@@ -202,8 +202,15 @@
         // Get API key from environment variable
         const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+        // Debug logging
+        console.log('Environment variables:', import.meta.env);
+        console.log('API_KEY value:', API_KEY);
+        console.log('API_KEY type:', typeof API_KEY);
+        console.log('API_KEY length:', API_KEY?.length);
+
         if (!API_KEY) {
             console.error('Google Maps API key not found. Make sure VITE_GOOGLE_MAPS_API_KEY is set in .env file');
+            alert('API key not found! Check console for details.');
         }
 
         let map;
